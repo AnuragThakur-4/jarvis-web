@@ -1,0 +1,163 @@
+from flask import Flask, render_template_string, request, redirect
+import json, os
+from datetime import datetime
+
+app = Flask(__name__)
+
+BRAIN_FILE = "brain.json"
+if os.path.exists(BRAIN_FILE):
+    with open(BRAIN_FILE, "r") as f:
+        brain = json.load(f)
+else:
+    brain = {}
+
+html_template = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jarvis AI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(ellipse at center, #1b2735 0%, #090a0f 100%);
+      color: #fff;
+      overflow: hidden;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+    .sidebar {
+      width: 300px;
+      background: #111;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 2px solid #00fff7;
+    }
+    .sidebar h3 {
+      color: #00fff7;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .sidebar li {
+      padding: 8px;
+      margin: 4px 0;
+      background: #222;
+      border-radius: 5px;
+    }
+    .main {
+      flex: 1;
+      padding: 40px;
+      animation: fadeIn 2s ease;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: #00fff7;
+      text-shadow: 0 0 10px #00fff7;
+    }
+    form {
+      margin-top: 20px;
+    }
+    input, button {
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    input {
+      width: 80%;
+      margin-right: 10px;
+    }
+    button {
+      background-color: #00fff7;
+      color: black;
+      cursor: pointer;
+    }
+    .answer {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #ffffff;
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .trainer {
+      margin-top: 40px;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h3>📋 Trained Questions</h3>
+      <ul>
+        {% for q in brain.keys() %}
+        <li>{{ q }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="main">
+      <h1>👋 Welcome, Sir – I am Jarvis</h1>
+      <form method="post">
+        <input type="text" name="question" placeholder="Ask Jarvis..." required>
+        <button type="submit">Ask</button>
+      </form>
+      {% if answer %}
+        <div class="answer">
+          <strong>Jarvis:</strong> {{ answer }}
+        </div>
+      {% endif %}
+
+      <div class="trainer">
+        <h3>🧠 Train Me</h3>
+        <form method="post">
+          <input type="text" name="train_question" placeholder="New Question" required><br>
+          <input type="text" name="train_answer" placeholder="New Answer" required><br>
+          <button type="submit">Train</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    answer = ""
+    if request.method == "POST":
+        question = request.form.get("question")
+        if question:
+            q = question.lower()
+            if q in brain:
+                answer = brain[q]
+            elif "time" in q:
+                answer = datetime.now().strftime("The current time is %H:%M:%S, Sir.")
+            elif "date" in q:
+                answer = datetime.now().strftime("Today's date is %B %d, %Y.")
+            else:
+                answer = "I'm still training, Sir. Please teach me."
+
+        # Trainer section
+        t_q = request.form.get("train_question")
+        t_a = request.form.get("train_answer")
+        if t_q and t_a:
+            brain[t_q.lower()] = t_a
+            with open(BRAIN_FILE, "w") as f:
+                json.dump(brain, f)
+            return redirect("/")
+
+    return render_template_string(html_template, answer=answer, brain=brain)
+
+if __name__ == "__main__":
+    app.run(debug=True)
