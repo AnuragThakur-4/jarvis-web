@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jarvis Web</title>
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #00ffcc;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      margin-top: 50px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    #response {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🤖 Jarvis - Your Web Assistant</h1>
+  <form method="POST">
+    <input type="text" name="question" placeholder="Ask me anything..." required>
+    <button type="submit">Ask</button>
+  </form>
+  <div id="response">{{ response }}</div>
+</body>
+</html>
